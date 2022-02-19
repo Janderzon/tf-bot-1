@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 using System.Linq;
 using cAlgo.API;
 using cAlgo.API.Indicators;
@@ -10,22 +11,9 @@ namespace cAlgo.Robots
     [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.None)]
     public class TFBot1 : Robot
     {
-        [Parameter(DefaultValue = 0.0)]
-        public double Parameter { get; set; }
-
-        protected override void OnStart()
+        protected override void OnBar()
         {
-            // Put your initialization logic here
-        }
 
-        protected override void OnTick()
-        {
-            // Put your core logic here
-        }
-
-        protected override void OnStop()
-        {
-            // Put your deinitialization logic here
         }
     }
 }
