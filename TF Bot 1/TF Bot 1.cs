@@ -42,6 +42,11 @@ namespace cAlgo.Robots
 
         protected override void OnBar()
         {
+            GetPrediction();
+        }
+
+        private void GetPrediction()
+        {
             var request = (HttpWebRequest)WebRequest.Create(connectionString + "model");
             request.Method = "GET";
 
