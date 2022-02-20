@@ -42,17 +42,29 @@ namespace cAlgo.Robots
 
         protected override void OnBar()
         {
-            SendData("C:\\Users\\james\\OneDrive\\Documents\\cAlgo\\Sources\\Robots\\TF Bot 1\\data.csv");
+            int numBars = 5;
+            var stream = new MemoryStream();
+            using (var sw = new StreamWriter(stream))
+            {
+                sw.WriteLine("Time,Ask");
+                for (int i = numBars - 1; i >= 0; i--)
+                {
+                    sw.WriteLine(Bars.Last(i).OpenTime + "," + Bars.Last(i).Open);
+                }
+                sw.Flush();
+                SendData(stream);
+            }
+
             GetPrediction();
         }
 
-        private void SendData(string filePath)
+        private void SendData(Stream dataStream)
         {
             var request = (HttpWebRequest)WebRequest.Create(connectionString + "data/data.csv");
             request.Method = "POST";
             var stream = request.GetRequestStream();
-            var data = File.ReadAllBytes(filePath);
-            stream.Write(data, 0, data.Length);
+            dataStream.Position = 0;
+            dataStream.CopyTo(stream);
             stream.Close();
 
             HttpWebResponse response;
