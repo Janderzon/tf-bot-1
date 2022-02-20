@@ -11,7 +11,7 @@ using System.Collections.Generic;
 
 namespace cAlgo.Robots
 {
-    [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.Internet)]
+    [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.Internet | AccessRights.FileSystem)]
     public class TFBot1 : Robot
     {
         public string connectionString { get; set; }
@@ -19,6 +19,25 @@ namespace cAlgo.Robots
         protected override void OnStart()
         {
             connectionString = "http://127.0.0.1:5000/";
+
+            var request = (HttpWebRequest)WebRequest.Create(connectionString + "model/conv_model.h5");
+            request.Method = "POST";
+            var stream = request.GetRequestStream();
+            var model = File.ReadAllBytes("C:\\Users\\james\\OneDrive\\Documents\\cAlgo\\Sources\\Robots\\TF Bot 1\\conv_model.h5");
+            stream.Write(model, 0, model.Length);
+            stream.Close();
+
+            HttpWebResponse response;
+
+            try
+            {
+                response = (HttpWebResponse)request.GetResponse();
+            } catch (WebException webException)
+            {
+                response = (HttpWebResponse)webException.Response;
+            }
+
+            response.Close();
         }
 
         protected override void OnBar()
