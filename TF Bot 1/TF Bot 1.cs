@@ -42,7 +42,30 @@ namespace cAlgo.Robots
 
         protected override void OnBar()
         {
+            SendData("C:\\Users\\james\\OneDrive\\Documents\\cAlgo\\Sources\\Robots\\TF Bot 1\\data.csv");
             GetPrediction();
+        }
+
+        private void SendData(string filePath)
+        {
+            var request = (HttpWebRequest)WebRequest.Create(connectionString + "data/data.csv");
+            request.Method = "POST";
+            var stream = request.GetRequestStream();
+            var data = File.ReadAllBytes(filePath);
+            stream.Write(data, 0, data.Length);
+            stream.Close();
+
+            HttpWebResponse response;
+
+            try
+            {
+                response = (HttpWebResponse)request.GetResponse();
+            } catch (WebException webException)
+            {
+                response = (HttpWebResponse)webException.Response;
+            }
+
+            response.Close();
         }
 
         private void GetPrediction()
