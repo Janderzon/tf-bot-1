@@ -26,7 +26,15 @@ namespace cAlgo.Robots
             var request = (HttpWebRequest)WebRequest.Create(connectionString + "model");
             request.Method = "GET";
 
-            var response = (HttpWebResponse)request.GetResponse();
+            HttpWebResponse response;
+
+            try
+            {
+                response = (HttpWebResponse)request.GetResponse();
+            } catch (WebException webException)
+            {
+                response = (HttpWebResponse)webException.Response;
+            }
 
             var stream = response.GetResponseStream();
 
@@ -34,7 +42,10 @@ namespace cAlgo.Robots
             {
                 string content = sr.ReadToEnd();
                 var deserializedContent = JsonConvert.DeserializeObject<Dictionary<string, string>>(content);
-                Print(deserializedContent["error"]);
+                if (response.StatusCode == HttpStatusCode.OK)
+                    Print(deserializedContent["prediction"]);
+                else
+                    Print(deserializedContent["error"]);
             }
 
             response.Close();
