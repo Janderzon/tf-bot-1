@@ -55,7 +55,33 @@ namespace cAlgo.Robots
                 SendData(stream);
             }
 
-            GetPrediction();
+            double prediciton = GetPrediction();
+
+            double risk = 0.02;
+            double minStopLossPips = 5;
+
+            if (prediciton > Ask)
+            {
+                double takeProfitPips = (prediciton - Ask) / Symbol.PipSize;
+                double stopLossPips = 1.0 * takeProfitPips;
+                if (stopLossPips > minStopLossPips)
+                {
+                    double maxLossBaseCurrency = (Math.Min(Account.Equity, Account.Balance) * risk) * (Symbol.PipSize / Symbol.PipValue);
+                    double volume = Symbol.NormalizeVolumeInUnits(maxLossBaseCurrency / (stopLossPips * Symbol.PipSize));
+                    ExecuteMarketOrder(TradeType.Buy, Symbol.Name, volume, "", takeProfitPips, stopLossPips);
+                }
+            }
+            else if (prediciton < Bid)
+            {
+                double takeProfitPips = (Bid - prediciton) / Symbol.PipSize;
+                double stopLossPips = 1.0 * takeProfitPips;
+                if (stopLossPips > minStopLossPips)
+                {
+                    double maxLossBaseCurrency = (Math.Min(Account.Equity, Account.Balance) * risk) * (Symbol.PipSize / Symbol.PipValue);
+                    double volume = Symbol.NormalizeVolumeInUnits(maxLossBaseCurrency / (stopLossPips * Symbol.PipSize));
+                    ExecuteMarketOrder(TradeType.Sell, Symbol.Name, volume, "", takeProfitPips, stopLossPips);
+                }
+            }
         }
 
         private void SendData(Stream dataStream)
@@ -80,7 +106,7 @@ namespace cAlgo.Robots
             response.Close();
         }
 
-        private void GetPrediction()
+        private double GetPrediction()
         {
             var request = (HttpWebRequest)WebRequest.Create(connectionString + "model");
             request.Method = "GET";
@@ -97,17 +123,21 @@ namespace cAlgo.Robots
 
             var stream = response.GetResponseStream();
 
+            double prediction = 0;
+
             using (var sr = new StreamReader(stream))
             {
                 string content = sr.ReadToEnd();
                 var deserializedContent = JsonConvert.DeserializeObject<Dictionary<string, string>>(content);
                 if (response.StatusCode == HttpStatusCode.OK)
-                    Print(deserializedContent["prediction"]);
+                    prediction = double.Parse(deserializedContent["prediction"]);
                 else
                     Print(deserializedContent["error"]);
             }
 
             response.Close();
+
+            return prediction;
         }
     }
 }
