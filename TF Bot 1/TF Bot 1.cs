@@ -14,19 +14,16 @@ namespace cAlgo.Robots
     [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.Internet | AccessRights.FileSystem)]
     public class TFBot1 : Robot
     {
-        public string connectionString { get; set; }
-
-        [Parameter()]
-        public DataSeries Source { get; set; }
+        public string ConnectionString { get; set; }
 
         protected override void OnStart()
         {
-            connectionString = "http://127.0.0.1:5000/";
+            ConnectionString = "http://127.0.0.1:5000/";
 
-            var request = (HttpWebRequest)WebRequest.Create(connectionString + "model/conv_model.h5");
+            var request = (HttpWebRequest)WebRequest.Create(ConnectionString + "model/conv_model.h5");
             request.Method = "POST";
             var stream = request.GetRequestStream();
-            var model = File.ReadAllBytes("C:\\Users\\james\\OneDrive\\Documents\\cAlgo\\Sources\\Robots\\TF Bot 1\\conv_model_4.h5");
+            var model = File.ReadAllBytes("C:\\Users\\james\\OneDrive\\Documents\\cAlgo\\Sources\\Robots\\TF Bot 1\\conv_model_5.h5");
             stream.Write(model, 0, model.Length);
             stream.Close();
 
@@ -45,23 +42,23 @@ namespace cAlgo.Robots
 
         protected override void OnBar()
         {
-            if (double.IsNaN(Indicators.SimpleMovingAverage(Source, 24 * 7).Result.Last(4)))
+            if (double.IsNaN(Indicators.SimpleMovingAverage(Bars.ClosePrices, 24 * 7).Result.Last(6)))
                 return;
             int numBars = 5;
             var stream = new MemoryStream();
             using (var sw = new StreamWriter(stream))
             {
-                sw.WriteLine("OpenTime,OpenPrice");
-                for (int i = numBars - 1; i >= 0; i--)
+                sw.WriteLine("OpenTime,ClosePrice");
+                for (int i = numBars; i > 0; i--)
                 {
-                    double openNorm = Bars.Last(i).Open - Indicators.SimpleMovingAverage(Source, 24 * 7).Result.Last(i);
-                    sw.WriteLine(Bars.Last(i).OpenTime + "," + openNorm);
+                    double closeNorm = Bars.Last(i).Close - Indicators.SimpleMovingAverage(Bars.ClosePrices, 24 * 7).Result.Last(i + 1);
+                    sw.WriteLine(Bars.Last(i).OpenTime + "," + closeNorm);
                 }
                 sw.Flush();
                 SendData(stream);
             }
 
-            double prediciton = GetPrediction() + Indicators.SimpleMovingAverage(Source, 24 * 7).Result.LastValue;
+            double prediciton = GetPrediction() + Indicators.SimpleMovingAverage(Bars.ClosePrices, 24 * 7).Result.Last(1);
 
             double risk = 0.02;
             double minStopLossPips = 5;
@@ -92,7 +89,7 @@ namespace cAlgo.Robots
 
         private void SendData(Stream dataStream)
         {
-            var request = (HttpWebRequest)WebRequest.Create(connectionString + "data/data.csv");
+            var request = (HttpWebRequest)WebRequest.Create(ConnectionString + "data/data.csv");
             request.Method = "POST";
             var stream = request.GetRequestStream();
             dataStream.Position = 0;
@@ -114,7 +111,7 @@ namespace cAlgo.Robots
 
         private double GetPrediction()
         {
-            var request = (HttpWebRequest)WebRequest.Create(connectionString + "model");
+            var request = (HttpWebRequest)WebRequest.Create(ConnectionString + "model");
             request.Method = "GET";
 
             HttpWebResponse response;
